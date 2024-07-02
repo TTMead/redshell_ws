@@ -10,11 +10,14 @@
 #include <termios.h> 	// Contains POSIX terminal control definitions
 #include <unistd.h> 	// write(), read(), close()
 
+// Messaging headers
+#include "redshell/command.h"
+
 #define CMDVEL_TIMEOUT_S 0.5	// The amount of time to wait for a cmd_vel msg before stopping motors
 #define CMDVEL_MIN_PERIOD_S 0.1		// The amount of time to ignore cmd_vel msg after one has been received
 #define MOTOR_DEADZONE 9.0				// The threshold of percentage PWM that causes the motor to start moving
 
-MotorInterface::MotorInterface() : Node("redshell_motor_interface")
+MotorInterface::MotorInterface() : Node("redshell_interface")
 {
 	// Subscribe to /cmd_vel topic
 	_cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
@@ -75,8 +78,8 @@ MotorInterface::timout_timer_callback() {
 	}
 }
 
-int
-MotorInterface::scale_motor_command(int command)
+int32_t
+MotorInterface::scale_motor_command(int32_t command)
 {
 	// If below deadzone, don't run
 	if (command < MOTOR_DEADZONE) {
@@ -93,54 +96,23 @@ MotorInterface::scale_motor_command(int command)
 void
 MotorInterface::write_motor_command(float throttle, float yaw_rate){
 	// Speed values are within the range of [-1 to 1]
-	float left_speed = (throttle - yaw_rate)/2;    
-	float right_speed = (throttle + yaw_rate)/2;
+	const float left_speed = (throttle - yaw_rate)/2;    
+	const float right_speed = (throttle + yaw_rate)/2;
 
 	// Motor speed commands are within the range of [00 to 99]
-	int left_cmd = std::ceil(abs(left_speed)*(99.0));
-	int right_cmd = std::ceil(abs(right_speed)*(99.0));
+	int32_t left_cmd = std::ceil(abs(left_speed)*(99.0));
+	int32_t right_cmd = std::ceil(abs(right_speed)*(99.0));
 
 	// Scale the motor speeds out of the deadzone
 	left_cmd = scale_motor_command(left_cmd);
 	right_cmd = scale_motor_command(right_cmd);
 
-	char left_dir;
-	char right_dir;
+	uint8_t motor_command_msg[MESSAGE_SIZE];
+	serialize(msg_command_encode(left_cmd, right_cmd), motor_command_msg);
 
-	if (left_speed >= 0) {
-		left_dir = 'F';
-	} else {
-		left_dir = 'B';
-	}
-	
-	if(right_speed >= 0) {
-		right_dir = 'F';
-	} else {
-		right_dir = 'B';
-	}
+	write(this->_serial_port, motor_command_msg, sizeof(motor_command_msg));
 
-	char left_cmd_str[3];
-	char right_cmd_str[3];
-	snprintf(left_cmd_str, 3, "%02d", left_cmd);
-	snprintf(right_cmd_str, 3, "%02d", right_cmd);
-
-	char motor_command[] = {
-		'=',
-		'L',
-		left_dir,
-		left_cmd_str[0],
-		left_cmd_str[1],
-		'=',
-		'R',
-		right_dir,
-		right_cmd_str[0],
-		right_cmd_str[1],
-		'\r'
-	};
-
-	RCLCPP_INFO(this->get_logger(), "Sending motor command '%s'.", motor_command);
-
-	write(this->_serial_port, motor_command, sizeof(motor_command));
+	RCLCPP_INFO(this->get_logger(), "Sending motor command (%u, %u)", left_cmd, right_cmd);
 }
 
 void

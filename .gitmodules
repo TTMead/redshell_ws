@@ -2,5 +2,5 @@
 	path = src/ROS-TCP-Endpoint
 	url = https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git
 [submodule "src/redshell_io/src/redshell_messages"]
-	path = src/redshell_io/src/redshell_messages
+	path = src/redshell_io/include/redshell_messages
 	url = https://github.com/TTMead/redshell-messages.git
