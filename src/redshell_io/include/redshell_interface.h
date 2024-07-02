@@ -4,11 +4,11 @@
 
 #include "redshell/redshell_messages.h"
 
-class MotorInterface : public rclcpp::Node
+class RedshellInterface : public rclcpp::Node
 {
 public:
-	MotorInterface();
-	~MotorInterface();
+	RedshellInterface();
+	~RedshellInterface();
 	
 private:
 	void run();

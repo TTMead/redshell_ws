@@ -14,7 +14,7 @@ def generate_launch_description():
         # ==== Motor IO ====
         launch_ros.actions.Node(
             package='redshell_io',
-            executable='motor_interface',
+            executable='redshell_interface',
         ),
 
         # ==== Joystick ====

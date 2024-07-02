@@ -1,4 +1,4 @@
-#include "motor_interface.hpp"
+#include "redshell_interface.h"
 
 // C library headers
 #include <stdio.h>
@@ -18,12 +18,12 @@ static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait fo
 static constexpr double cmdvel_min_period_s = 0.1; // The amount of time to ignore cmd_vel msg after one has been received
 static constexpr double motor_deadzone = 9.0; // The threshold of percentage PWM that causes the motor to start moving
 
-MotorInterface::MotorInterface() : Node("redshell_interface")
+RedshellInterface::RedshellInterface() : Node("redshell_interface")
 {
 	// Subscribe to /cmd_vel topic
 	_cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
 		"/cmd_vel", 10, 
-		std::bind(&MotorInterface::cmd_vel_callback, this, std::placeholders::_1)
+		std::bind(&RedshellInterface::cmd_vel_callback, this, std::placeholders::_1)
 	);
 
 	// Open serial port connection to the motor interface board
@@ -37,22 +37,22 @@ MotorInterface::MotorInterface() : Node("redshell_interface")
 	_last_command_timestamp = rclcpp::Node::now();
 	_command_timout_timer = this->create_wall_timer(
     	std::chrono::milliseconds(500), 
-		std::bind(&MotorInterface::timout_timer_callback, this)
+		std::bind(&RedshellInterface::timout_timer_callback, this)
 	);
 
 	// Initialise run loop timer for reading serial
 	_run_timer = this->create_wall_timer(
     	std::chrono::milliseconds(10), 
-		std::bind(&MotorInterface::run, this)
+		std::bind(&RedshellInterface::run, this)
 	);
 }
 
-MotorInterface::~MotorInterface() {
+RedshellInterface::~RedshellInterface() {
 	close(this->_serial_port);
 }
 
 void
-MotorInterface::run()
+RedshellInterface::run()
 {
 	char incoming_byte[1];
 	read(0, incoming_byte, 1);
@@ -75,7 +75,7 @@ MotorInterface::run()
 }
 
 void
-MotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+RedshellInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
 	if (msg->linear.y != 0 ||
 		msg->linear.z != 0 ||
@@ -99,7 +99,7 @@ MotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 
 
 void
-MotorInterface::timout_timer_callback() {
+RedshellInterface::timout_timer_callback() {
 	rclcpp::Time current_time = rclcpp::Node::now();
 
 	// Stop the motors if we havent received a command for over 1 second
@@ -109,7 +109,7 @@ MotorInterface::timout_timer_callback() {
 }
 
 int32_t
-MotorInterface::scale_motor_command(int32_t command) const
+RedshellInterface::scale_motor_command(int32_t command) const
 {
 	// If below deadzone, don't run
 	if (command < motor_deadzone) {
@@ -124,7 +124,7 @@ MotorInterface::scale_motor_command(int32_t command) const
 
 
 void
-MotorInterface::write_motor_command(float throttle, float yaw_rate){
+RedshellInterface::write_motor_command(float throttle, float yaw_rate){
 	// Speed values are within the range of [-1 to 1]
 	const float left_speed = (throttle - yaw_rate)/2;    
 	const float right_speed = (throttle + yaw_rate)/2;
@@ -146,7 +146,7 @@ MotorInterface::write_motor_command(float throttle, float yaw_rate){
 }
 
 void
-MotorInterface::configure_serial_port()
+RedshellInterface::configure_serial_port()
 {
 	/* Critical serial specifications:
 	 * Baud: 19200
@@ -205,7 +205,7 @@ MotorInterface::configure_serial_port()
 int main(int argc, char * argv[])
 {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<MotorInterface>());
+	rclcpp::spin(std::make_shared<RedshellInterface>());
 	rclcpp::shutdown();
 	return 0;
 }

@@ -10,10 +10,10 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 set(DEPENDENICES rclcpp geometry_msgs)
 
-add_executable(motor_interface src/motor_interface.cpp)
-target_include_directories(motor_interface PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include ${CMAKE_CURRENT_LIST_DIR}/include/redshell_messages/include)
-ament_target_dependencies(motor_interface ${DEPENDENICES})
-install(TARGETS motor_interface
+add_executable(redshell_interface src/redshell_interface.cpp)
+target_include_directories(redshell_interface PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include ${CMAKE_CURRENT_LIST_DIR}/include/redshell_messages/include)
+ament_target_dependencies(redshell_interface ${DEPENDENICES})
+install(TARGETS redshell_interface
     DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
