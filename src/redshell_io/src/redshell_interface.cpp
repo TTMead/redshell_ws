@@ -119,9 +119,8 @@ RedshellInterface::scale_motor_command(int32_t command) const
 	// Else return scaled value
 	float command_f = static_cast<float>(command);
 	command_f = ((command_f * (99.0 - motor_deadzone)) / 99.0) + motor_deadzone;
-	return static_cast<int>(command_f);
+	return static_cast<int32_t>(command_f);
 }
-
 
 void
 RedshellInterface::write_motor_command(float throttle, float yaw_rate){
@@ -200,7 +199,6 @@ RedshellInterface::configure_serial_port()
 		return;
 	}
 }
-
 
 int main(int argc, char * argv[])
 {
