@@ -107,7 +107,7 @@ MotorInterface::write_motor_command(float throttle, float yaw_rate){
 	left_cmd = scale_motor_command(left_cmd);
 	right_cmd = scale_motor_command(right_cmd);
 
-	uint8_t motor_command_msg[MESSAGE_SIZE];
+	uint8_t motor_command_msg[REDSHELL_MESSAGE_SIZE];
 	serialize(msg_command_encode(left_cmd, right_cmd), motor_command_msg);
 
 	write(this->_serial_port, motor_command_msg, sizeof(motor_command_msg));
