@@ -13,9 +13,9 @@
 // Messaging headers
 #include "redshell/command.h"
 
-#define CMDVEL_TIMEOUT_S 0.5	// The amount of time to wait for a cmd_vel msg before stopping motors
-#define CMDVEL_MIN_PERIOD_S 0.1		// The amount of time to ignore cmd_vel msg after one has been received
-#define MOTOR_DEADZONE 9.0				// The threshold of percentage PWM that causes the motor to start moving
+static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
+static constexpr double cmdvel_min_period_s = 0.1; // The amount of time to ignore cmd_vel msg after one has been received
+static constexpr double motor_deadzone = 9.0; // The threshold of percentage PWM that causes the motor to start moving
 
 MotorInterface::MotorInterface() : Node("redshell_interface")
 {
@@ -57,7 +57,7 @@ MotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 
 	// If we received /cmd_vel at a rate too high, ignore the message (to prevent flooding the UART bus)
 	rclcpp::Time current_time = rclcpp::Node::now();
-	if ((current_time - _last_command_timestamp) < rclcpp::Duration::from_seconds(CMDVEL_MIN_PERIOD_S)) {
+	if ((current_time - _last_command_timestamp) < rclcpp::Duration::from_seconds(cmdvel_min_period_s)) {
 		return;
 	}
 
@@ -73,7 +73,7 @@ MotorInterface::timout_timer_callback() {
 	rclcpp::Time current_time = rclcpp::Node::now();
 
 	// Stop the motors if we havent received a command for over 1 second
-	if ((current_time - _last_command_timestamp) > rclcpp::Duration::from_seconds(CMDVEL_TIMEOUT_S)) {
+	if ((current_time - _last_command_timestamp) > rclcpp::Duration::from_seconds(cmdvel_timeout_s)) {
 		write_motor_command(0, 0);
 	}
 }
@@ -82,13 +82,13 @@ int32_t
 MotorInterface::scale_motor_command(int32_t command)
 {
 	// If below deadzone, don't run
-	if (command < MOTOR_DEADZONE) {
+	if (command < motor_deadzone) {
 		return 0;
 	}
 
 	// Else return scaled value
 	float command_f = static_cast<float>(command);
-	command_f = ((command_f * (99.0 - MOTOR_DEADZONE)) / 99.0) + MOTOR_DEADZONE;
+	command_f = ((command_f * (99.0 - motor_deadzone)) / 99.0) + motor_deadzone;
 	return static_cast<int>(command_f);
 }
 
