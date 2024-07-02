@@ -13,6 +13,7 @@
 // Messaging headers
 #include "redshell/command.h"
 
+static constexpr char serial_port_location[] = "/dev/ttyUSB0";
 static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
 static constexpr double cmdvel_min_period_s = 0.1; // The amount of time to ignore cmd_vel msg after one has been received
 static constexpr double motor_deadzone = 9.0; // The threshold of percentage PWM that causes the motor to start moving
@@ -26,9 +27,9 @@ MotorInterface::MotorInterface() : Node("redshell_interface")
 	);
 
 	// Open serial port connection to the motor interface board
-	this->_serial_port = open(this->SERIAL_PORT_LOCATION, O_RDWR);
+	this->_serial_port = open(serial_port_location, O_RDWR);
 	if (this->_serial_port < 0) {
-		RCLCPP_ERROR(this->get_logger(), "Error %i while attempting to open serial connection '%s': \"%s\"\n", errno, this->SERIAL_PORT_LOCATION, strerror(errno));
+		RCLCPP_ERROR(this->get_logger(), "Error %i while attempting to open serial connection '%s': \"%s\"\n", errno, serial_port_location, strerror(errno));
 	}
 	configure_serial_port();
 
@@ -108,7 +109,7 @@ MotorInterface::timout_timer_callback() {
 }
 
 int32_t
-MotorInterface::scale_motor_command(int32_t command)
+MotorInterface::scale_motor_command(int32_t command) const
 {
 	// If below deadzone, don't run
 	if (command < motor_deadzone) {
