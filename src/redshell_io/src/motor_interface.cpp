@@ -38,10 +38,39 @@ MotorInterface::MotorInterface() : Node("redshell_interface")
     	std::chrono::milliseconds(500), 
 		std::bind(&MotorInterface::timout_timer_callback, this)
 	);
+
+	// Initialise run loop timer for reading serial
+	_run_timer = this->create_wall_timer(
+    	std::chrono::milliseconds(10), 
+		std::bind(&MotorInterface::run, this)
+	);
 }
 
 MotorInterface::~MotorInterface() {
 	close(this->_serial_port);
+}
+
+void
+MotorInterface::run()
+{
+	char incoming_byte[1];
+	read(0, incoming_byte, 1);
+
+	if (incoming_byte[0] == REDSHELL_START_BYTE)
+	{
+		_command_index = 0;
+	}
+
+	_command_buffer[_command_index] = incoming_byte[0];
+	_command_index++;
+
+	if (_command_index >= REDSHELL_MESSAGE_SIZE)
+	{
+		PacketInfo incoming_packet;
+		deserialize(incoming_packet, (uint8_t*)(_command_buffer));
+
+		RCLCPP_INFO(this->get_logger(), "From i/o: %u", incoming_packet.id);
+	}
 }
 
 void

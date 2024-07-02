@@ -1,7 +1,8 @@
-#include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-
+#include <geometry_msgs/msg/twist.hpp>
 #include <memory>
+#include <rclcpp/rclcpp.hpp>
+
+#include "redshell/redshell_messages.h"
 
 class MotorInterface : public rclcpp::Node
 {
@@ -12,6 +13,7 @@ class MotorInterface : public rclcpp::Node
 		const char* SERIAL_PORT_LOCATION = "/dev/ttyUSB0";
 
 	private:
+		void run();
 		void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
 		void timout_timer_callback();
 		void write_motor_command(float throttle, float yaw_rate);
@@ -20,6 +22,9 @@ class MotorInterface : public rclcpp::Node
 
 		rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr _cmd_vel_sub;
 		rclcpp::TimerBase::SharedPtr _command_timout_timer;
+		rclcpp::TimerBase::SharedPtr _run_timer;
 		rclcpp::Time _last_command_timestamp;
 		int _serial_port;
+		char _command_buffer[REDSHELL_MESSAGE_SIZE];
+		uint8_t _command_index{0};
 };
